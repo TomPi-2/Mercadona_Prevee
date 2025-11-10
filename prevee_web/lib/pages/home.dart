@@ -13,10 +13,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const ProductGridView(),
-    const RecipesPage(),
-  ];
+  final List<Widget> _pages = [const ProductGridView(), RecipesPage()];
 
   void _onNavigate(int index) {
     setState(() {
@@ -30,13 +27,8 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          Header(
-            selectedIndex: _selectedIndex,
-            onNavigate: _onNavigate,
-          ),
-          Expanded(
-            child: _pages[_selectedIndex],
-          ),
+          Header(selectedIndex: _selectedIndex, onNavigate: _onNavigate),
+          Expanded(child: _pages[_selectedIndex]),
         ],
       ),
     );

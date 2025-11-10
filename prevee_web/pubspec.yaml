@@ -62,6 +62,10 @@ flutter:
   assets:
     - assets/
     - assets/mercaLista.png
+    - assets/croquetas-de-jamon-y-queso.jpg
+    - assets/paella-valenciana-tradicional.jpg
+    - assets/tortilla-de-patatas-1.jpg
+    - assets/gazpacho-andaluz.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
