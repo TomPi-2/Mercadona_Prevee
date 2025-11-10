@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
+import 'colors.dart';
 
 class Header extends StatelessWidget {
   const Header({super.key});
@@ -10,11 +11,11 @@ class Header extends StatelessWidget {
       width: double.infinity,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.green[700],
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -30,12 +31,12 @@ class Header extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.store,
-                    color: Colors.green[700],
+                    color: Colors.white,
                     size: 32,
                   ),
                 ),
@@ -43,7 +44,7 @@ class Header extends StatelessWidget {
                 const Text(
                   'MercaLista',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.primary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -63,9 +64,9 @@ class Header extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Buscar productos, tiendas...',
                     hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: AppColors.primary),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(25),
                       borderSide: BorderSide.none,

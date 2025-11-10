@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'colors.dart';
 
 class ProfileButton extends StatefulWidget {
   const ProfileButton({super.key});
@@ -41,7 +42,7 @@ class _ProfileButtonState extends State<ProfileButton> {
         const PopupMenuItem<String>(
           value: 'perfil',
           child: ListTile(
-            leading: Icon(Icons.person, color: Colors.green),
+            leading: Icon(Icons.person, color: AppColors.primary),
             title: Text('Mi Perfil'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -50,7 +51,7 @@ class _ProfileButtonState extends State<ProfileButton> {
         const PopupMenuItem<String>(
           value: 'configuracion',
           child: ListTile(
-            leading: Icon(Icons.settings, color: Colors.green),
+            leading: Icon(Icons.settings, color: AppColors.primary),
             title: Text('Configuración'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -58,7 +59,7 @@ class _ProfileButtonState extends State<ProfileButton> {
         const PopupMenuItem<String>(
           value: 'ayuda',
           child: ListTile(
-            leading: Icon(Icons.help_outline, color: Colors.green),
+            leading: Icon(Icons.help_outline, color: AppColors.primary),
             title: Text('Ayuda'),
             contentPadding: EdgeInsets.zero,
           ),
@@ -82,17 +83,17 @@ class _ProfileButtonState extends State<ProfileButton> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: _isHovered ? Colors.white.withOpacity(0.2) : Colors.transparent,
+            color: _isHovered ? AppColors.secondary.withOpacity(0.2) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
                 radius: 20,
-                child: Icon(
+                child: const Icon(
                   Icons.person,
-                  color: Colors.green[700],
+                  color: Colors.white,
                   size: 24,
                 ),
               ),
@@ -104,7 +105,7 @@ class _ProfileButtonState extends State<ProfileButton> {
                   const Text(
                     'Usuario',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -112,7 +113,7 @@ class _ProfileButtonState extends State<ProfileButton> {
                   Text(
                     'user@example.com',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.grey[600],
                       fontSize: 11,
                     ),
                   ),
@@ -121,7 +122,7 @@ class _ProfileButtonState extends State<ProfileButton> {
               const SizedBox(width: 4),
               const Icon(
                 Icons.arrow_drop_down,
-                color: Colors.white,
+                color: AppColors.primary,
                 size: 24,
               ),
             ],
