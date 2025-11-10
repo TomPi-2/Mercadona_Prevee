@@ -49,8 +49,9 @@ flutter pub get
 ```
 - Ejecutar en el navegador Chrome:
 ```bash
-flutter run chrome
+flutter run
 ```
+- Seleccionar Chrome (opción 2)
 
 ## ⚙️ Requisitos previos
 Antes de comenzar, asegúrate de tener instalado:
