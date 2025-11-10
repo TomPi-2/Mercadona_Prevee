@@ -27,27 +27,10 @@ class Header extends StatelessWidget {
             // Logo a la izquierda
             Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.store,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'MercaLista',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                SizedBox(
+                  width: 300,
+                  height: 60,
+                  child: Image.asset('assets/mercaLista.png'),
                 ),
               ],
             ),
@@ -66,7 +49,7 @@ class Header extends StatelessWidget {
                     hintStyle: TextStyle(color: Colors.grey[400]),
                     prefixIcon: Icon(Icons.search, color: AppColors.primary),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Colors.grey[200],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(25),
                       borderSide: BorderSide.none,

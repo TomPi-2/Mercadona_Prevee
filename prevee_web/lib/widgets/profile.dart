@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prevee_web/services/user_service.dart';
 import 'colors.dart';
 
 class ProfileButton extends StatefulWidget {
@@ -9,152 +10,205 @@ class ProfileButton extends StatefulWidget {
 }
 
 class _ProfileButtonState extends State<ProfileButton> {
-  bool _isHovered = false;
+  final UserService _userService = UserService();
+  Customer? _currentUser;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final users = await _userService.getAllUsers();
+      if (users.isNotEmpty) {
+        setState(() {
+          _currentUser = users.first;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error al cargar usuario: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
     return PopupMenuButton<String>(
       offset: const Offset(0, 50),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      onSelected: (value) {
-        switch (value) {
-          case 'perfil':
-            // Navegar a perfil
-            print('Navegar a perfil');
-            break;
-          case 'configuracion':
-            // Navegar a configuración
-            print('Navegar a configuración');
-            break;
-          case 'ayuda':
-            // Navegar a ayuda
-            print('Navegar a ayuda');
-            break;
-          case 'cerrar_sesion':
-            // Cerrar sesión
-            _showLogoutDialog(context);
-            break;
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'perfil',
-          child: ListTile(
-            leading: Icon(Icons.person, color: AppColors.primary),
-            title: Text('Mi Perfil'),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'configuracion',
-          child: ListTile(
-            leading: Icon(Icons.settings, color: AppColors.primary),
-            title: Text('Configuración'),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'ayuda',
-          child: ListTile(
-            leading: Icon(Icons.help_outline, color: AppColors.primary),
-            title: Text('Ayuda'),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'cerrar_sesion',
-          child: ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
-            title: Text(
-              'Cerrar Sesión',
-              style: TextStyle(color: Colors.red),
-            ),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-      ],
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: _isHovered ? AppColors.secondary.withOpacity(0.2) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primary,
-                radius: 20,
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 24,
+              Text(
+                _currentUser?.name ?? 'Usuario',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
-              const SizedBox(width: 8),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Laura',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+              if (_currentUser?.email != null)
+                Text(
+                  _currentUser!.email!,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
                   ),
-                ],
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.arrow_drop_down,
-                color: AppColors.primary,
-                size: 24,
-              ),
+                ),
+              if (_currentUser?.phoneNumber != null)
+                Text(
+                  _currentUser!.phoneNumber!,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              const Divider(),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        const PopupMenuItem(
+          value: 'profile',
+          child: Row(
+            children: [
+              Icon(Icons.person_outline, size: 20),
+              SizedBox(width: 12),
+              Text('Mi Perfil'),
+            ],
           ),
-          title: const Text('Cerrar Sesión'),
-          content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Aquí implementarás el logout con Supabase
-                print('Cerrando sesión...');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+        ),
+        const PopupMenuItem(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(Icons.settings_outlined, size: 20),
+              SizedBox(width: 12),
+              Text('Configuración'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'lists',
+          child: Row(
+            children: [
+              Icon(Icons.list_alt, size: 20),
+              SizedBox(width: 12),
+              Text('Mis Listas'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.logout, size: 20, color: Colors.red),
+              SizedBox(width: 12),
+              Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        switch (value) {
+          case 'profile':
+            // Navegar a perfil
+            break;
+          case 'settings':
+            // Navegar a configuración
+            break;
+          case 'lists':
+            // Navegar a listas
+            break;
+          case 'logout':
+            // Cerrar sesión
+            break;
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary,
+              child: Text(
+                _currentUser?.name?.substring(0, 1).toUpperCase() ?? 'U',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-              child: const Text('Cerrar Sesión'),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _currentUser?.name ?? 'Usuario',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                if (_currentUser?.email != null)
+                  Text(
+                    _currentUser!.email!,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              color: Colors.grey[700],
+              size: 20,
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
