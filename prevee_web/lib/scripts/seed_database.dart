@@ -6,13 +6,16 @@ class DatabaseSeeder {
   final SupabaseClient _client = Supabase.instance.client;
   final Random _random = Random();
 
-  /// Poblar toda la base de datos (tiendas y productos)
+  /// Poblar toda la base de datos (tiendas, productos, clientes y pedidos)
   Future<void> seedAll() async {
     print('🚀 Iniciando población de base de datos...\n');
     
     try {
       await seedShops();
       await seedProducts();
+      await seedCustomers();
+      await seedOrders();
+      await refreshMaterializedView();
       print('\n✨ ¡Base de datos poblada exitosamente!');
     } catch (e) {
       print('❌ Error al poblar la base de datos: $e');
@@ -104,16 +107,151 @@ class DatabaseSeeder {
     print('  📍 Productos distribuidos entre tiendas ID: ${tiendasSeleccionadas.join(", ")}');
   }
 
+  /// Poblar clientes de prueba
+  Future<void> seedCustomers() async {
+    print('\n👥 Creando clientes de prueba...');
+
+    final customers = _getCustomersData();
+    int contador = 0;
+
+    for (var customer in customers) {
+      await _client.from('Customers').insert(customer);
+      contador++;
+    }
+
+    print('  ✅ Total: $contador clientes creados');
+  }
+
+  /// Poblar pedidos y sus items
+  Future<void> seedOrders() async {
+    print('\n📦 Creando pedidos de prueba...');
+
+    // Obtener IDs necesarios
+    final customers = await _client.from('Customers').select('id');
+    final shops = await _client.from('Mercadona_shop').select('id').filter('id', 'in', '(43,44,45)');
+    final products = await _client.from('Products').select('id, price, name, category');
+
+    if ((customers as List).isEmpty || (shops as List).isEmpty || (products as List).isEmpty) {
+      print('❌ Error: Faltan datos base. Asegúrate de ejecutar seedCustomers(), seedShops() y seedProducts() primero.');
+      return;
+    }
+
+    final customerIds = customers.map((c) => c['id'] as int).toList();
+    final shopIds = shops.map((s) => s['id'] as int).toList();
+    final productList = products;
+
+    int ordersCreated = 0;
+    int itemsCreated = 0;
+
+    // Crear pedidos para cada cliente
+    for (var customerId in customerIds) {
+      // Crear entre 5 y 15 pedidos por cliente
+      final numOrders = 5 + _random.nextInt(11);
+
+      for (var i = 0; i < numOrders; i++) {
+        // Fecha aleatoria en los últimos 90 días
+        final daysAgo = _random.nextInt(90);
+        final orderDate = DateTime.now().subtract(Duration(days: daysAgo));
+
+        // Tienda aleatoria
+        final shopId = shopIds[_random.nextInt(shopIds.length)];
+
+        // Crear el pedido
+        final orderData = {
+          'customer_id': customerId,
+          'shop_id': shopId,
+          'created_at': orderDate.toIso8601String(),
+          'total_amount': 0.0, // Se calculará después
+        };
+
+        final orderResponse = await _client
+            .from('Orders')
+            .insert(orderData)
+            .select()
+            .single();
+
+        final orderId = orderResponse['id'] as int;
+        ordersCreated++;
+
+        // Crear items del pedido (entre 3 y 12 productos)
+        final numItems = 3 + _random.nextInt(10);
+        double totalAmount = 0.0;
+
+        for (var j = 0; j < numItems; j++) {
+          final product = productList[_random.nextInt(productList.length)];
+          final quantity = _getRandomQuantity(product['category'] as String);
+          final unitPrice = product['price'] as num;
+          final itemTotal = quantity * unitPrice;
+
+          final itemData = {
+            'order_id': orderId,
+            'product_id': product['id'],
+            'quantity': quantity,
+            'unit': _getUnit(product['category'] as String),
+            'unit_price': unitPrice.toDouble(),
+            'created_at': orderDate.toIso8601String(),
+          };
+
+          await _client.from('OrderItems').insert(itemData);
+          totalAmount += itemTotal;
+          itemsCreated++;
+        }
+
+        // Actualizar el total del pedido
+        await _client
+            .from('Orders')
+            .update({'total_amount': totalAmount})
+            .eq('id', orderId);
+      }
+
+      if (ordersCreated % 10 == 0) {
+        print('  📋 [$ordersCreated pedidos] creados...');
+      }
+    }
+
+    print('  ✅ Total: $ordersCreated pedidos creados');
+    print('  ✅ Total: $itemsCreated items de pedido creados');
+  }
+
+  /// Refrescar la vista materializada
+  Future<void> refreshMaterializedView() async {
+    print('\n🔄 Actualizando vista materializada CustomerProductStats...');
+    
+    try {
+      await _client.rpc('refresh_customer_product_stats');
+      print('  ✅ Vista materializada actualizada correctamente');
+    } catch (e) {
+      print('  ❌ Error al actualizar vista materializada: $e');
+      print('  💡 Asegúrate de ejecutar este SQL en Supabase:');
+      print('');
+      print('     CREATE OR REPLACE FUNCTION refresh_customer_product_stats()');
+      print('     RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS \$\$');
+      print('     BEGIN');
+      print('       REFRESH MATERIALIZED VIEW "CustomerProductStats";');
+      print('     END; \$\$;');
+      print('');
+      rethrow;
+    }
+  }
+  
   /// Limpiar toda la base de datos
   Future<void> clearAll() async {
     print('🗑️  Limpiando base de datos...');
     
     try {
-      // Eliminar productos primero (por la foreign key)
+      // Eliminar en orden por dependencias
+      await _client.from('OrderItems').delete().neq('id', 0);
+      print('  ✓ Items de pedidos eliminados');
+      
+      await _client.from('Orders').delete().neq('id', 0);
+      print('  ✓ Pedidos eliminados');
+      
+      await _client.from('Customers').delete().neq('id', 0);
+      print('  ✓ Clientes eliminados');
+      
       await _client.from('Products').delete().neq('id', 0);
       print('  ✓ Productos eliminados');
       
-      // Eliminar tiendas
       await _client.from('Mercadona_shop').delete().neq('id', 0);
       print('  ✓ Tiendas eliminadas');
       
@@ -135,17 +273,109 @@ class DatabaseSeeder {
     }
   }
 
+  Future<void> clearOrders() async {
+    print('🗑️  Limpiando pedidos e items...');
+    try {
+      await _client.from('OrderItems').delete().neq('id', 0);
+      print('  ✓ Items de pedidos eliminados');
+      
+      await _client.from('Orders').delete().neq('id', 0);
+      print('  ✓ Pedidos eliminados');
+    } catch (e) {
+      print('❌ Error al limpiar los pedidos: $e');
+      rethrow;
+    }
+  }
+
   /// Verificar si la base de datos ya está poblada
   Future<bool> isDatabasePopulated() async {
     try {
       final shops = await _client.from('Mercadona_shop').select('id').limit(1);
       final products = await _client.from('Products').select('id').limit(1);
+      final customers = await _client.from('Customers').select('id').limit(1);
+      final orders = await _client.from('Orders').select('id').limit(1);
       
-      return (shops as List).isNotEmpty && (products as List).isNotEmpty;
+      return (shops as List).isNotEmpty && 
+             (products as List).isNotEmpty &&
+             (customers as List).isNotEmpty &&
+             (orders as List).isNotEmpty;
     } catch (e) {
       print('❌ Error al verificar la base de datos: $e');
       return false;
     }
+  }
+
+  // ============================================
+  // MÉTODOS AUXILIARES
+  // ============================================
+
+  /// Obtener cantidad aleatoria según categoría
+  double _getRandomQuantity(String category) {
+    switch (category) {
+      case 'Lácteos':
+      case 'Bebidas':
+        return 1 + _random.nextInt(4).toDouble(); // 1-4 unidades
+      case 'Carnes':
+      case 'Pescados':
+        return 0.5 + (_random.nextInt(10) * 0.25); // 0.5-3kg
+      case 'Frutas':
+      case 'Verduras':
+        return 0.5 + (_random.nextInt(15) * 0.25); // 0.5-4kg
+      case 'Panadería':
+      case 'Pastelería':
+        return 1 + _random.nextInt(3).toDouble(); // 1-3 unidades
+      default:
+        return 1 + _random.nextInt(3).toDouble(); // 1-3 unidades
+    }
+  }
+
+  /// Obtener unidad según categoría
+  String _getUnit(String category) {
+    switch (category) {
+      case 'Carnes':
+      case 'Pescados':
+      case 'Frutas':
+      case 'Verduras':
+        return 'kg';
+      case 'Bebidas':
+        return 'L';
+      default:
+        return 'ud';
+    }
+  }
+
+  // ============================================
+  // DATOS DE CLIENTES
+  // ============================================
+
+  List<Map<String, dynamic>> _getCustomersData() {
+    return [
+      {
+        'name': 'Juan García López',
+        'email': 'juan.garcia@email.com',
+        'phone_number': '+34612345678',
+      },
+      {
+        'name': 'María Martínez Sánchez',
+        'email': 'maria.martinez@email.com',
+        'phone_number': '+34623456789',
+      },
+      {
+        'name': 'Carlos Rodríguez Pérez',
+        'email': 'carlos.rodriguez@email.com',
+        'phone_number': '+34634567890',
+      },
+      {
+        'name': 'Ana Fernández Gómez',
+        'email': 'ana.fernandez@email.com',
+        'phone_number': '+34645678901',
+      },
+      {
+        'name': 'David López Martín',
+        'email': 'david.lopez@email.com',
+        'phone_number': '+34656789012',
+      },
+    ];
   }
 
   // ============================================

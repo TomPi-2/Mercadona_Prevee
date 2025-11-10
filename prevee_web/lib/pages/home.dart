@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:prevee_web/pages/content.dart';
+import 'package:prevee_web/pages/recipes.dart';
 import '../widgets/header.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    const ProductGridView(),
+    const RecipesPage(),
+  ];
+
+  void _onNavigate(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,12 +30,12 @@ class HomePage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const Header(),
+          Header(
+            selectedIndex: _selectedIndex,
+            onNavigate: _onNavigate,
+          ),
           Expanded(
-            child: Container(
-              color: Colors.white,
-              child: const Center(child: ProductGridView()),
-            ),
+            child: _pages[_selectedIndex],
           ),
         ],
       ),

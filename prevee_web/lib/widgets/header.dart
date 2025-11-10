@@ -3,7 +3,14 @@ import 'profile.dart';
 import 'colors.dart';
 
 class Header extends StatelessWidget {
-  const Header({super.key});
+  final int selectedIndex;
+  final Function(int) onNavigate;
+
+  const Header({
+    super.key,
+    required this.selectedIndex,
+    required this.onNavigate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +32,22 @@ class Header extends StatelessWidget {
         child: Row(
           children: [
             // Logo a la izquierda
-            Row(
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 60,
-                  child: Image.asset('assets/mercaLista.png'),
-                ),
-              ],
+            InkWell(
+              onTap: () => onNavigate(0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 300,
+                    height: 60,
+                    child: Image.asset('assets/mercaLista.png'),
+                  ),
+                ],
+              ),
             ),
-            
+
             // Espaciador
             const Spacer(),
-            
+
             // Buscador centrado
             Expanded(
               flex: 2,
@@ -62,10 +72,68 @@ class Header extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Espaciador
             const Spacer(),
-            
+
+            // Botón de Inicio
+            TextButton(
+              onPressed: () => onNavigate(0),
+              style: TextButton.styleFrom(
+                backgroundColor: selectedIndex == 0
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Inicio",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: selectedIndex == 0
+                      ? AppColors.primary
+                      : Colors.black87,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            // Botón de Recetas
+            TextButton(
+              onPressed: () => onNavigate(1),
+              style: TextButton.styleFrom(
+                backgroundColor: selectedIndex == 1
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Recetas",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: selectedIndex == 1
+                      ? AppColors.primary
+                      : Colors.black87,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 24),
+
             // Botón de perfil a la derecha
             const ProfileButton(),
           ],
