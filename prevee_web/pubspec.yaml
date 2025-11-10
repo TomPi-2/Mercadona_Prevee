@@ -66,6 +66,14 @@ flutter:
     - assets/paella-valenciana-tradicional.jpg
     - assets/tortilla-de-patatas-1.jpg
     - assets/gazpacho-andaluz.jpg
+    - assets/comida/AceitaDeOliva.png
+    - assets/comida/AlubiasBlancas.png
+    - assets/comida/CaballaEnAceite.png
+    - assets/comida/cava.png
+    - assets/comida/garbanzo.png
+    - assets/comida/pavoloncheado.png
+    - assets/comida/quesotiernohacendado.png
+    - assets/comida/tomatetriturado.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
