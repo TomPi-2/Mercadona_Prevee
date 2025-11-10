@@ -15,7 +15,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const CombinedListsPage(),
-    const RecipesPage(),
+    RecipesPage(),
   ];
 
   void _onNavigate(int index) {
@@ -30,13 +30,8 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          Header(
-            selectedIndex: _selectedIndex,
-            onNavigate: _onNavigate,
-          ),
-          Expanded(
-            child: _pages[_selectedIndex],
-          ),
+          Header(selectedIndex: _selectedIndex, onNavigate: _onNavigate),
+          Expanded(child: _pages[_selectedIndex]),
         ],
       ),
     );
