@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prevee_web/pages/content.dart';
 import '../widgets/header.dart';
 
 class HomePage extends StatelessWidget {
@@ -14,12 +15,7 @@ class HomePage extends StatelessWidget {
           Expanded(
             child: Container(
               color: Colors.white,
-              child: const Center(
-                child: Text(
-                  'Contenido principal aquí',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-              ),
+              child: const Center(child: ProductGridView()),
             ),
           ),
         ],
