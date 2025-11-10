@@ -103,18 +103,11 @@ class _ProfileButtonState extends State<ProfileButton> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Usuario',
+                    'Laura',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'user@example.com',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 11,
                     ),
                   ),
                 ],
