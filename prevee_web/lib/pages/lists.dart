@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:prevee_web/services/user_service.dart';
-import '../services/supabase_service.dart';
 import '../widgets/colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,7 +13,6 @@ class CombinedListsPage extends StatefulWidget {
 class _CombinedListsPageState extends State<CombinedListsPage> {
   final SupabaseClient _client = Supabase.instance.client;
   final UserService _userService = UserService();
-  final SupabaseService _supabaseService = SupabaseService();
   
   // Para la lista inteligente unificada
   // Map: productId -> {product: {...}, quantity: int, needScore: double?, isRecommended: bool}
