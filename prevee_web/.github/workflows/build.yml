@@ -5,18 +5,45 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
   sonarqube:
-    name: SonarQube
-    runs-on: windows-latest
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      # The analysis requires to retrieve dependencies and build successfully
-      - name: Build
-        run: <mark><commands_to_build_your_project></mark>
+      
+      # Instalar Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'  # Ajusta a tu versión
+          channel: 'stable'
+      
+      # Obtener dependencias
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: prevee_web
+      
+      # Analizar el código (sin build completo)
+      - name: Analyze
+        run: flutter analyze
+        working-directory: prevee_web
+        continue-on-error: true
+      
+      # (Opcional) Ejecutar tests y generar cobertura
+      # - name: Run tests
+      #   run: flutter test --coverage
+      #   working-directory: prevee_web
+      
+      # Ejecutar análisis de SonarQube
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: prevee_web
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
