@@ -13,15 +13,15 @@ class CombinedListsPage extends StatefulWidget {
 class _CombinedListsPageState extends State<CombinedListsPage> {
   final SupabaseClient _client = Supabase.instance.client;
   final UserService _userService = UserService();
-  
+
   // Para la lista inteligente unificada
   // Map: productId -> {product: {...}, quantity: int, needScore: double?, isRecommended: bool}
   final Map<int, Map<String, dynamic>> _shoppingList = {};
-  
+
   int? _currentCustomerId;
   double _minNeedScore = 0.5;
   bool _isLoadingList = true;
-  
+
   // Para todos los productos con paginación
   List<Map<String, dynamic>> _allProducts = [];
   bool _isLoadingProducts = true;
@@ -41,10 +41,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
 
   /// Inicializa la carga de datos de forma optimizada
   Future<void> _initializeData() async {
-    await Future.wait([
-      _loadShoppingList(),
-      _loadProducts(reset: true),
-    ]);
+    await Future.wait([_loadShoppingList(), _loadProducts(reset: true)]);
   }
 
   void _updateManualCart(int productId, int quantity) {
@@ -83,13 +80,13 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
       for (var entry in _manualCart.entries) {
         final productId = entry.key;
         final quantity = entry.value;
-        
+
         // Buscar el producto en _allProducts
         final product = _allProducts.firstWhere(
           (p) => p['id'] == productId,
           orElse: () => {},
         );
-        
+
         if (product.isNotEmpty) {
           if (_shoppingList.containsKey(productId)) {
             // Si ya existe, sumar la cantidad
@@ -107,7 +104,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
           }
         }
       }
-      
+
       // Limpiar el carrito temporal
       _manualCart.clear();
     });
@@ -126,44 +123,46 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
   /// Obtener lista ordenada de productos (recomendados primero, luego manuales)
   List<MapEntry<int, Map<String, dynamic>>> get _sortedShoppingList {
     final entries = _shoppingList.entries.toList();
-    
+
     entries.sort((a, b) {
       final aIsRecommended = a.value['isRecommended'] as bool;
       final bIsRecommended = b.value['isRecommended'] as bool;
-      
+
       // Primero los recomendados
       if (aIsRecommended && !bIsRecommended) return -1;
       if (!aIsRecommended && bIsRecommended) return 1;
-      
+
       // Entre recomendados, ordenar por needScore
       if (aIsRecommended && bIsRecommended) {
         final aScore = (a.value['needScore'] as num?)?.toDouble() ?? 0;
         final bScore = (b.value['needScore'] as num?)?.toDouble() ?? 0;
         return bScore.compareTo(aScore);
       }
-      
+
       // Entre manuales, ordenar por nombre
-      final aName = (a.value['product'] as Map<String, dynamic>)['name'] as String? ?? '';
-      final bName = (b.value['product'] as Map<String, dynamic>)['name'] as String? ?? '';
+      final aName =
+          (a.value['product'] as Map<String, dynamic>)['name'] as String? ?? '';
+      final bName =
+          (b.value['product'] as Map<String, dynamic>)['name'] as String? ?? '';
       return aName.compareTo(bName);
     });
-    
+
     return entries;
   }
 
   Future<void> _loadShoppingList() async {
     if (!mounted) return;
     setState(() => _isLoadingList = true);
-    
+
     try {
       final customers = await _userService.getAllUsers();
       if (customers.isEmpty) {
         if (mounted) setState(() => _isLoadingList = false);
         return;
       }
-      
+
       _currentCustomerId = customers.first.id;
-      
+
       if (_currentCustomerId == null) {
         if (mounted) setState(() => _isLoadingList = false);
         return;
@@ -195,14 +194,16 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
 
       setState(() {
         // Limpiar productos recomendados anteriores
-        _shoppingList.removeWhere((key, value) => value['isRecommended'] == true);
-        
+        _shoppingList.removeWhere(
+          (key, value) => value['isRecommended'] == true,
+        );
+
         // Añadir nuevos productos recomendados
         for (var item in response as List) {
           final itemMap = item as Map<String, dynamic>;
           final productId = itemMap['product_id'] as int;
           final product = itemMap['Products'] as Map<String, dynamic>;
-          
+
           _shoppingList[productId] = {
             'product': product,
             'quantity': 1, // Cantidad por defecto
@@ -212,7 +213,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
             'avgDaysBetween': (itemMap['avg_days_between'] as num?)?.toDouble(),
           };
         }
-        
+
         _isLoadingList = false;
       });
     } catch (e) {
@@ -221,7 +222,9 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
         setState(() => _isLoadingList = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar la lista: ${e.toString().substring(0, 100)}'),
+            content: Text(
+              'Error al cargar la lista: ${e.toString().substring(0, 100)}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -240,7 +243,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
       if (!_hasMoreProducts || _isLoadingMoreProducts) return;
       if (mounted) setState(() => _isLoadingMoreProducts = true);
     }
-    
+
     try {
       final int from = _currentPage * _pageSize;
       final int to = from + _pageSize - 1;
@@ -296,7 +299,10 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
     return Icons.check_circle_outline;
   }
 
-  int get _totalItems => _shoppingList.values.fold(0, (sum, item) => sum + (item['quantity'] as int));
+  int get _totalItems => _shoppingList.values.fold(
+    0,
+    (sum, item) => sum + (item['quantity'] as int),
+  );
 
   double get _totalPrice {
     double total = 0;
@@ -308,8 +314,12 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
     return total;
   }
 
-  int get _recommendedCount => _shoppingList.values.where((item) => item['isRecommended'] == true).length;
-  int get _manualCount => _shoppingList.values.where((item) => item['isRecommended'] == false).length;
+  int get _recommendedCount => _shoppingList.values
+      .where((item) => item['isRecommended'] == true)
+      .length;
+  int get _manualCount => _shoppingList.values
+      .where((item) => item['isRecommended'] == false)
+      .length;
 
   @override
   Widget build(BuildContext context) {
@@ -458,10 +468,22 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                                   value: _minNeedScore,
                                   underline: const SizedBox(),
                                   items: const [
-                                    DropdownMenuItem(value: 0.3, child: Text('Bajo (30%)')),
-                                    DropdownMenuItem(value: 0.5, child: Text('Medio (50%)')),
-                                    DropdownMenuItem(value: 0.7, child: Text('Alto (70%)')),
-                                    DropdownMenuItem(value: 0.9, child: Text('Urgente (90%)')),
+                                    DropdownMenuItem(
+                                      value: 0.3,
+                                      child: Text('Bajo (30%)'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 0.5,
+                                      child: Text('Medio (50%)'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 0.7,
+                                      child: Text('Alto (70%)'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 0.9,
+                                      child: Text('Urgente (90%)'),
+                                    ),
                                   ],
                                   onChanged: (value) {
                                     if (value != null) {
@@ -520,50 +542,54 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
 
               // Lista unificada de productos
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final entry = _sortedShoppingList[index];
-                    final productId = entry.key;
-                    final itemData = entry.value;
-                    final product = itemData['product'] as Map<String, dynamic>;
-                    final quantity = itemData['quantity'] as int;
-                    final isRecommended = itemData['isRecommended'] as bool;
-                    final needScore = (itemData['needScore'] as num?)?.toDouble();
-                    final daysSinceLast = (itemData['daysSinceLast'] as num?)?.toDouble();
-                    final avgDaysBetween = (itemData['avgDaysBetween'] as num?)?.toDouble();
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final entry = _sortedShoppingList[index];
+                  final productId = entry.key;
+                  final itemData = entry.value;
+                  final product = itemData['product'] as Map<String, dynamic>;
+                  final quantity = itemData['quantity'] as int;
+                  final isRecommended = itemData['isRecommended'] as bool;
+                  final needScore = (itemData['needScore'] as num?)?.toDouble();
+                  final daysSinceLast = (itemData['daysSinceLast'] as num?)
+                      ?.toDouble();
+                  final avgDaysBetween = (itemData['avgDaysBetween'] as num?)
+                      ?.toDouble();
 
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(24, index == 0 ? 24 : 0, 24, 12),
-                      child: _UnifiedListProductCard(
-                        product: product,
-                        productId: productId,
-                        quantity: quantity,
-                        isRecommended: isRecommended,
-                        needScore: needScore,
-                        daysSinceLast: daysSinceLast,
-                        avgDaysBetween: avgDaysBetween,
-                        onQuantityChanged: (newQuantity) {
-                          setState(() {
-                            if (newQuantity > 0) {
-                              _shoppingList[productId]!['quantity'] = newQuantity;
-                            } else {
-                              _shoppingList.remove(productId);
-                            }
-                          });
-                        },
-                        onRemove: () {
-                          setState(() {
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      index == 0 ? 24 : 0,
+                      24,
+                      12,
+                    ),
+                    child: _UnifiedListProductCard(
+                      product: product,
+                      productId: productId,
+                      quantity: quantity,
+                      isRecommended: isRecommended,
+                      needScore: needScore,
+                      daysSinceLast: daysSinceLast,
+                      avgDaysBetween: avgDaysBetween,
+                      onQuantityChanged: (newQuantity) {
+                        setState(() {
+                          if (newQuantity > 0) {
+                            _shoppingList[productId]!['quantity'] = newQuantity;
+                          } else {
                             _shoppingList.remove(productId);
-                          });
-                        },
-                        getNeedScoreColor: _getNeedScoreColor,
-                        getNeedScoreIcon: _getNeedScoreIcon,
-                        getNeedScoreLabel: _getNeedScoreLabel,
-                      ),
-                    );
-                  },
-                  childCount: _sortedShoppingList.length,
-                ),
+                          }
+                        });
+                      },
+                      onRemove: () {
+                        setState(() {
+                          _shoppingList.remove(productId);
+                        });
+                      },
+                      getNeedScoreColor: _getNeedScoreColor,
+                      getNeedScoreIcon: _getNeedScoreIcon,
+                      getNeedScoreLabel: _getNeedScoreLabel,
+                    ),
+                  );
+                }, childCount: _sortedShoppingList.length),
               ),
 
               // Footer de la lista
@@ -638,11 +664,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                 padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.inventory_2,
-                      size: 28,
-                      color: AppColors.primary,
-                    ),
+                    Icon(Icons.inventory_2, size: 28, color: AppColors.primary),
                     const SizedBox(width: 12),
                     const Text(
                       'Todos los Productos',
@@ -655,10 +677,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                     Expanded(
                       child: Text(
                         'Añade productos manualmente a tu lista',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ),
                   ],
@@ -683,19 +702,17 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                     mainAxisSpacing: 20,
                     childAspectRatio: 0.75,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return ProductCard(
-                        key: ValueKey(_allProducts[index]['id']),
-                        product: _allProducts[index],
-                        initialQuantity: _manualCart[_allProducts[index]['id']] ?? 0,
-                        onQuantityChanged: (quantity) {
-                          _updateManualCart(_allProducts[index]['id'], quantity);
-                        },
-                      );
-                    },
-                    childCount: _allProducts.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return ProductCard(
+                      key: ValueKey(_allProducts[index]['id']),
+                      product: _allProducts[index],
+                      initialQuantity:
+                          _manualCart[_allProducts[index]['id']] ?? 0,
+                      onQuantityChanged: (quantity) {
+                        _updateManualCart(_allProducts[index]['id'], quantity);
+                      },
+                    );
+                  }, childCount: _allProducts.length),
                 ),
               ),
 
@@ -735,7 +752,9 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                 ),
 
               // Mensaje final si no hay más productos
-              if (!_hasMoreProducts && !_isLoadingMoreProducts && _allProducts.isNotEmpty)
+              if (!_hasMoreProducts &&
+                  !_isLoadingMoreProducts &&
+                  _allProducts.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.only(
@@ -770,7 +789,10 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
               curve: Curves.easeInOut,
               child: Container(
                 margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
@@ -884,10 +906,7 @@ class _CombinedListsPageState extends State<CombinedListsPage> {
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[700],
-                    ),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[700]),
                   ),
                   Text(
                     value,
@@ -948,7 +967,7 @@ class _UnifiedListProductCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isRecommended 
+          color: isRecommended
               ? Colors.blue.withOpacity(0.3)
               : Colors.orange.withOpacity(0.3),
           width: 2,
@@ -971,7 +990,9 @@ class _UnifiedListProductCard extends StatelessWidget {
                   Icon(
                     isRecommended ? Icons.auto_awesome : Icons.add_circle,
                     size: 16,
-                    color: isRecommended ? Colors.blue[700] : Colors.orange[700],
+                    color: isRecommended
+                        ? Colors.blue[700]
+                        : Colors.orange[700],
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -979,37 +1000,37 @@ class _UnifiedListProductCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: isRecommended ? Colors.blue[700] : Colors.orange[700],
+                      color: isRecommended
+                          ? Colors.blue[700]
+                          : Colors.orange[700],
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Imagen
             _buildImage(),
             const SizedBox(width: 16),
-            
+
             // Info del producto
-            Expanded(
-              child: _buildProductInfo(),
-            ),
-            
+            Expanded(child: _buildProductInfo()),
+
             // Indicador de necesidad (solo para recomendados)
             if (isRecommended && needScore != null) ...[
               _buildNeedScoreIndicator(),
               const SizedBox(width: 16),
             ],
-            
+
             // Selector de cantidad
             _buildQuantitySelector(),
             const SizedBox(width: 16),
-            
+
             // Precio
             _buildPriceTag(),
             const SizedBox(width: 16),
-            
+
             // Botón eliminar
             IconButton(
               onPressed: onRemove,
@@ -1023,73 +1044,6 @@ class _UnifiedListProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProductImage(int productId, {double width = 80, double height = 80}) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[100]!,
-            Colors.grey[200]!,
-            Colors.green[50]!,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(
-          _getProductImagePath(productId),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Si no existe la imagen, mostrar placeholder
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey[200]!,
-                    Colors.grey[100]!,
-                    Colors.green[50]!,
-                  ],
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.8),
-                          Colors.white.withOpacity(0.4),
-                        ],
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.shopping_basket_outlined,
-                      size: width * 0.4,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildImage() {
     return Container(
       width: 80,
@@ -1098,11 +1052,7 @@ class _UnifiedListProductCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[100]!,
-            Colors.grey[200]!,
-            Colors.green[50]!,
-          ],
+          colors: [Colors.grey[100]!, Colors.grey[200]!, Colors.green[50]!],
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(8),
@@ -1185,10 +1135,7 @@ class _UnifiedListProductCard extends StatelessWidget {
       children: [
         Text(
           product['name'] ?? 'Sin nombre',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Row(
@@ -1201,19 +1148,13 @@ class _UnifiedListProductCard extends StatelessWidget {
               ),
               child: Text(
                 product['category'] ?? 'Sin categoría',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.primary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.primary),
               ),
             ),
             const SizedBox(width: 8),
             Text(
               'Stock: ${product['stock']} ud',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -1235,16 +1176,13 @@ class _UnifiedListProductCard extends StatelessWidget {
 
   Widget _buildNeedScoreIndicator() {
     if (needScore == null) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: getNeedScoreColor(needScore!).withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: getNeedScoreColor(needScore!),
-          width: 2,
-        ),
+        border: Border.all(color: getNeedScoreColor(needScore!), width: 2),
       ),
       child: Column(
         children: [
@@ -1321,17 +1259,14 @@ class _UnifiedListProductCard extends StatelessWidget {
   Widget _buildPriceTag() {
     final unitPrice = (product['price'] as num).toDouble();
     final totalPrice = unitPrice * quantity;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           '${unitPrice.toStringAsFixed(2)} € / ud',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 2),
         Container(
@@ -1410,8 +1345,8 @@ class _ProductCardState extends State<ProductCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: _isHovered 
-                  ? AppColors.primary.withOpacity(0.5) 
+              color: _isHovered
+                  ? AppColors.primary.withOpacity(0.5)
                   : Colors.transparent,
               width: 2,
             ),
@@ -1433,14 +1368,8 @@ class _ProductCardState extends State<ProductCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: _buildImage(),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: _buildProductDetails(),
-                ),
+                Expanded(flex: 3, child: _buildImage()),
+                Expanded(flex: 3, child: _buildProductDetails()),
               ],
             ),
           ),
@@ -1507,7 +1436,8 @@ class _ProductCardState extends State<ProductCard> {
               ),
             ),
           ),
-        if ((widget.product['stock'] ?? 0) < 10 && (widget.product['stock'] ?? 0) > 0)
+        if ((widget.product['stock'] ?? 0) < 10 &&
+            (widget.product['stock'] ?? 0) > 0)
           Positioned(
             top: 8,
             right: 8,
@@ -1517,10 +1447,7 @@ class _ProductCardState extends State<ProductCard> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.orange[400]!,
-                    Colors.orange[600]!,
-                  ],
+                  colors: [Colors.orange[400]!, Colors.orange[600]!],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
@@ -1542,16 +1469,15 @@ class _ProductCardState extends State<ProductCard> {
         if (_isHovered)
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.white.withOpacity(0.2), Colors.transparent],
                   ),
                 ),
               ),
@@ -1569,10 +1495,7 @@ class _ProductCardState extends State<ProductCard> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withOpacity(0.9),
-            Colors.white,
-          ],
+          colors: [Colors.white.withOpacity(0.9), Colors.white],
         ),
       ),
       child: Column(
@@ -1629,10 +1552,7 @@ class _ProductCardState extends State<ProductCard> {
                 stops: const [0.0, 0.5, 1.0],
               ),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Colors.green[200]!,
-                width: 1.5,
-              ),
+              border: Border.all(color: Colors.green[200]!, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.green.withOpacity(0.2),
@@ -1644,11 +1564,7 @@ class _ProductCardState extends State<ProductCard> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.euro,
-                  size: 14,
-                  color: Colors.green[800],
-                ),
+                Icon(Icons.euro, size: 14, color: Colors.green[800]),
                 const SizedBox(width: 2),
                 Text(
                   '${(widget.product['price'] ?? 0.0).toStringAsFixed(2)}',
@@ -1676,11 +1592,7 @@ class _ProductCardState extends State<ProductCard> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[50]!,
-            Colors.white,
-            Colors.grey[50]!,
-          ],
+          colors: [Colors.grey[50]!, Colors.white, Colors.grey[50]!],
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -1750,11 +1662,7 @@ class _ProductCardState extends State<ProductCard> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[100]!,
-            Colors.grey[200]!,
-            Colors.green[50]!,
-          ],
+          colors: [Colors.grey[100]!, Colors.grey[200]!, Colors.green[50]!],
           stops: const [0.0, 0.5, 1.0],
         ),
       ),
