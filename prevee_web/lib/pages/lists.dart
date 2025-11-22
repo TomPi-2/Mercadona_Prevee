@@ -10,6 +10,7 @@ class CombinedListsPage extends StatefulWidget {
   State<CombinedListsPage> createState() => _CombinedListsPageState();
 }
 
+
 class _CombinedListsPageState extends State<CombinedListsPage> {
   final SupabaseClient _client = Supabase.instance.client;
   final UserService _userService = UserService();
