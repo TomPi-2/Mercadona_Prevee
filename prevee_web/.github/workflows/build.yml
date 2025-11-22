@@ -29,6 +29,9 @@ jobs:
       
       - name: Run tests
         run: flutter run -d windows
+
+      - name: Coverage test
+        run: flutter test --coverage
       
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
