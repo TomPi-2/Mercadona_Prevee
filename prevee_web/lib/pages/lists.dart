@@ -1113,22 +1113,6 @@ class _UnifiedListProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImageSimple() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        Icons.shopping_basket_outlined,
-        size: 40,
-        color: Colors.grey[400],
-      ),
-    );
-  }
-
   Widget _buildProductInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
